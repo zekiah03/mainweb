@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Solnova Lab - 診断・記録・研究・ゲームを通して、自己理解の地図を作る実験室。"
+    />
+    <title>Solnova Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <canvas id="particles" aria-hidden="true"></canvas>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Solnova Lab">
+        <span class="brand-dot"></span>
+        <span>Solnova Lab</span>
+      </a>
+      <nav class="nav" aria-label="メインナビゲーション">
+        <a href="#viewer">Viewer</a>
+        <a href="#index">Index</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="intro" aria-labelledby="site-title">
+        <p class="small">A monochrome atlas of self-understanding</p>
+        <h1 id="site-title">Solnova Lab</h1>
+        <p class="lead">
+          診断・記録・研究・ゲームを通して、自己理解の地図を作る実験室。
+        </p>
+        <div class="theme-strip" aria-label="Solnova Lab の主題">
+          <span>測る</span>
+          <span>残す</span>
+          <span>分類する</span>
+          <span>体験する</span>
+          <span>つなぐ</span>
+        </div>
+      </section>
+
+      <section class="zoom-stage" id="viewer" aria-labelledby="viewer-title">
+        <div class="sticky-viewer">
+          <div class="viewer-meta">
+            <p class="small" id="viewer-title">Scroll to zoom</p>
+            <span id="counter">01 / 19</span>
+          </div>
+
+          <a class="app-orbit" id="activeLink" href="#" target="_blank" rel="noreferrer">
+            <span class="ring ring-one"></span>
+            <span class="ring ring-two"></span>
+            <span class="ring ring-three"></span>
+            <span class="app-content">
+              <span class="category" id="activeCategory">診断</span>
+              <span class="axis" id="activeAxis">SELF / PHASE</span>
+              <strong id="activeTitle">進化診断</strong>
+              <span id="activeDescription">自分の進化段階・成長フェーズを可視化する診断</span>
+              <span class="question" id="activeQuestion">いまの自分は、どの段階にいるのか。</span>
+              <span class="open-text">Open application</span>
+            </span>
+          </a>
+
+          <div class="field-notes" aria-hidden="true">
+            <span id="noteLeft">inner state</span>
+            <span id="noteRight">outer trace</span>
+          </div>
+
+          <div class="rail" id="rail" aria-label="アプリの進行状況"></div>
+        </div>
+      </section>
+
+      <section class="index-section" id="index" aria-labelledby="index-title">
+        <div class="section-heading">
+          <p class="small">Application Index</p>
+          <h2 id="index-title">すべてのアプリ</h2>
+          <p class="index-copy">
+            アプリ群は、自己をひとつの正解に固定しない。弱み、価値観、生活、感情、会話、虚像、悩みを別々の観測点として置き、そこからひとつの地図を立ち上げる。
+          </p>
+        </div>
+        <div class="app-list" id="appList"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Solnova Lab</span>
+      <a href="#top">Back to top</a>
+    </footer>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
