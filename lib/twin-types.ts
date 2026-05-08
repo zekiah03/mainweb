@@ -1,8 +1,5 @@
 /**
  * Solnova Digital Twin — Type Definitions (SUST v0.2 / v0.3)
- *
- * 13 軸 (A〜M) Morpho Profile、寄与イベント、仮説、insight、API 形状。
- * ファイル末尾に v0.1 (12 軸) の後方互換エクスポートを含む。
  */
 
 // ============================================================
@@ -44,10 +41,6 @@ export const AXIS_META_V2: Record<AxisId, AxisMetaV2> = {
   M: { id: 'M', name: 'Narrative Coherence',            layer: 'IV',  dim: 8,  beta: 0.5, tau_days: 90,   defaultUpdateRate: 0.30 },
 };
 
-// ============================================================
-//  感情 28 次元
-// ============================================================
-
 export const EMOTION_28 = [
   'joy', 'sadness', 'anger', 'fear', 'surprise', 'disgust',
   'love', 'gratitude', 'pride', 'hope', 'relief', 'curiosity',
@@ -57,10 +50,6 @@ export const EMOTION_28 = [
 ] as const;
 
 export type Emotion28 = (typeof EMOTION_28)[number];
-
-// ============================================================
-//  軸次元ラベル
-// ============================================================
 
 export const AXIS_DIMENSIONS: Record<AxisId, readonly string[]> = {
   A: [
@@ -90,10 +79,6 @@ export const AXIS_DIMENSIONS: Record<AxisId, readonly string[]> = {
   ],
 };
 
-// ============================================================
-//  Bayesian 分布
-// ============================================================
-
 export interface AxisDistribution {
   mu: number[];
   variance: number[];
@@ -113,12 +98,13 @@ export interface UserSusceptibility {
 }
 
 // ============================================================
-//  寄与 payload 型
+//  AppId  (SUST v0.3 Phase 2 — narrative / atlas / mirror 追加)
 // ============================================================
 
 export type AppId =
   | 'resonance' | 'feelings' | 'how-feelings-work' | 'valuse'
-  | 'pazst' | 'minus' | 'gap' | 'evolve';
+  | 'pazst' | 'minus' | 'gap' | 'evolve'
+  | 'narrative' | 'atlas' | 'mirror';
 
 export interface ResonancePayload {
   patternId: string;
@@ -175,9 +161,27 @@ export interface EvolvePayload {
   envAxes: Record<string, number>;
 }
 
-// ============================================================
-//  射影関数と関連型
-// ============================================================
+// SUST v0.3: クロスアプリで使えるセルフレゾナンス payload
+export interface SelfResonancePayload {
+  type: 'self_resonance';
+  rating: 'yes' | 'mid' | 'no';
+  // 他のメタ情報は任意
+  [key: string]: unknown;
+}
+
+export interface NarrativePayload {
+  type: 'self_now' | 'consistency_check' | 'retell';
+  text?: string;
+  rating?: number;       // 1、5 (consistency_check 用)
+  targetEpisodeId?: string;
+}
+
+export interface AtlasPayload {
+  type: 'hsp_score' | 'life_event' | 'context_card';
+  hspItems?: number[];   // 8 項目 1–7
+  event?: { date: string; label: string; valence: number };
+  context?: Record<string, string>;
+}
 
 export interface AxisContribution {
   axis: AxisId;
@@ -210,10 +214,6 @@ export interface AppProjector<P> {
   alpha_default: number;
   project: ProjectionFn<P>;
 }
-
-// ============================================================
-//  仮説・ insight
-// ============================================================
 
 export type HypothesisId =
   | 'SUST-1' | 'SUST-2' | 'SUST-3' | 'SUST-4' | 'SUST-5'
@@ -321,8 +321,7 @@ export interface PopulationPrior {
 }
 
 // ============================================================
-//  v0.1 後方互換 (twin_profiles テーブル · 旧 /twin ページ · 旧 レーダー UI)
-//  読み込み専用 · 新規コードでは使わないこと
+//  v0.1 後方互換
 // ============================================================
 
 export const AXIS_KEYS = ['A','B','C','D','E','F','G','H','I','J','K','L'] as const;
@@ -334,8 +333,6 @@ export interface LegacyAxisMeta {
   color: string;
 }
 
-// 旧 v0.1 軸メタ (ラダーチャート描画と /twin ページ用)
-// labelJa は v0.1 スキーマに合わせてある (例: A=構造 B=エネルギー)
 export const AXIS_META: Record<AxisKey, LegacyAxisMeta> = {
   A: { key: 'A', labelJa: '構造',           color: '#ef4444' },
   B: { key: 'B', labelJa: 'エネルギー',     color: '#f97316' },

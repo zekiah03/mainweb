@@ -1,5 +1,7 @@
 /**
  * /api/twin/contribute  —  SUST v0.2/v0.3 Bayesian update endpoint
+ *
+ * Phase 2: AppId 拡張 — narrative / atlas / mirror を許可
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -13,6 +15,7 @@ import {
   AXIS_DIMENSIONS,
   type AxisId,
   type AxisContribution,
+  type AppId,
   type ContributeResponse,
   type MorphoProfile,
   type AxisDistribution,
@@ -22,6 +25,7 @@ import {
 const APP_IDS = [
   'resonance','feelings','how-feelings-work','valuse',
   'pazst','minus','gap','evolve',
+  'narrative','atlas','mirror',
 ] as const;
 
 const ContributeSchema = z.object({
@@ -34,11 +38,7 @@ function normalizeContribute(raw: Record<string, unknown>): unknown {
   if (raw && typeof raw === 'object') {
     if ('appId' in raw && 'data' in raw) return raw;
     if ('app_id' in raw && 'raw_data' in raw) {
-      return {
-        appId: raw.app_id,
-        data: raw.raw_data,
-        client_ts: raw.client_ts,
-      };
+      return { appId: raw.app_id, data: raw.raw_data, client_ts: raw.client_ts };
     }
   }
   return raw;
@@ -102,10 +102,10 @@ function bayesianUpdate(prior: AxisDistribution, contributions: AxisContribution
   for (const c of contributions) {
     const idx = dims.indexOf(c.dimension);
     if (idx < 0) continue;
-    const obsMu  = mu[idx] + c.delta_mu;
+    const obsMu = mu[idx] + c.delta_mu;
     const obsVar = c.delta_variance;
     const invSum = 1 / variance[idx] + 1 / obsVar;
-    mu[idx]       = Math.max(0, Math.min(100, (mu[idx] / variance[idx] + obsMu / obsVar) / invSum));
+    mu[idx] = Math.max(0, Math.min(100, (mu[idx] / variance[idx] + obsMu / obsVar) / invSum));
     variance[idx] = Math.max(1, 1 / invSum);
   }
   return { mu, variance, lastUpdated: new Date().toISOString(), observationCount: prior.observationCount + 1 };
@@ -133,6 +133,7 @@ const HYPOTHESES: HypothesisDef[] = [
   { id:'SUST-2', axes:['J'],     defaultThreshold:0.6, evaluate:(m)=>{const s=getDim(m,'J','suppression');const ex=getDim(m,'J','explosiveness');return (s>70&&ex>70)?Math.min(s,ex)/100:0;} },
   { id:'SUST-3', axes:['E','F'], defaultThreshold:0.6, evaluate:(m)=>{const a1=1-Math.abs(getDim(m,'E','cat_moral')-getDim(m,'F','domain_values'))/100;const a2=1-Math.abs(getDim(m,'E','cat_social')-getDim(m,'F','domain_relationship'))/100;return (a1+a2)/2;} },
   { id:'SUST-6', axes:['K','D'], defaultThreshold:0.6, evaluate:(m)=>{const f=getDim(m,'K','rel_family');const l=getDim(m,'D','love');return (f<40&&l>60)?((40-f)+(l-60))/80:0;} },
+  { id:'SUST-7', axes:['M'],     defaultThreshold:0.55, evaluate:(m)=>{const s=getDim(m,'M','self_rated_coherence');const t=getDim(m,'M','temporal_coherence');return (s>60&&t>55)?(s+t)/200:0;} },
   { id:'SUST-10',axes:['F','D'], defaultThreshold:0.6, evaluate:(m)=>{const ps:Array<[string,string]>=[['domain_relationship','love'],['domain_time','freedom'],['domain_values','trust'],['domain_work','achievement']];const sims=ps.map(([f,d])=>1-Math.abs(getDim(m,'F',f)-getDim(m,'D',d))/100);return sims.reduce((a,b)=>a+b,0)/sims.length;} },
 ];
 
@@ -179,10 +180,11 @@ async function triggerInsights(
     return Math.max(0, Math.min(1, 1 - avgVar / 2500));
   };
   const CARDS: Partial<Record<HypothesisId, { type: string; axes: AxisId[]; title: string; body: string; actions: unknown[] }>> = {
-    'SUST-1':  { type:'pattern',     axes:['A','D'], title:'過去の不足を取り戻しているように見える', body:'幼少期の感情環境が厳しめだった一方で、いまは感情ニーズが落ち着いているようです。後年の経験で安全感を獲得した「 earned secure 」のパターンに見えます。', actions:[{kind:'reflect',label:'いまの安心の源を書き出す'},{kind:'open_app',app:'feelings',label:'feelings で背景を見直す'}] },
+    'SUST-1':  { type:'pattern',     axes:['A','D'], title:'過去の不足を取り戻しているように見える', body:'幼少期の感情環境が厳しめだった一方で、いまは感情ニーズが落ち着いているようです。後年の経験で安全感を獲得した「 earned secure 」のパターンに見えます。', actions:[{kind:'reflect',label:'いまの安心の源を書き出す'}] },
     'SUST-2':  { type:'caution',     axes:['J'],     title:'抑制と爆発が両極化しているかも', body:'感情を抑える傾向と瞬発的に出る傾向が同時に高まっています。表現の窓が狭くなると、押し込めた感情が突発的に噴き出すサイクルに入りやすくなります。', actions:[{kind:'reflect',label:'直近 1 週間のイラつきを 3 行で書く'}] },
     'SUST-3':  { type:'observation', axes:['E','F'], title:'価値観と境界線が整合しています', body:'大切にしている価値領域と、侵されたくない境界領域がよく一致しています。', actions:[{kind:'feedback',label:'これは自分らしい?'}] },
     'SUST-6':  { type:'invitation',  axes:['K','D'], title:'家族関係で感情のやり取りが滞っているかも', body:'家族との関係での開放度が低めで、同時に感情ニーズの渇望が高めです。', actions:[{kind:'open_app',app:'gap',label:'gap で家族との場面を記録'}] },
+    'SUST-7':  { type:'observation', axes:['M'],     title:'自己物語の統合が進んでいます', body:'ここ最近、自分についての語りと実際の論理が一致してきているようです。各層のばらつきが収束し、内部の整合度が上がっています。', actions:[{kind:'feedback',label:'この感覚はしっくり来る?'}] },
     'SUST-10': { type:'pattern',     axes:['F','D'], title:'境界とニーズが同期しています', body:'守りたい領域と必要としているものがきれいに対応しています。自己理解の整合度が高い状態です。', actions:[{kind:'feedback',label:'これはしっくり来る?'}] },
   };
   let count = 0;
@@ -217,10 +219,12 @@ export async function POST(req: NextRequest) {
   const sigma   = await getSigma(sb, user.id);
   const morpho  = await getMorpho(sb, user.id);
 
-  const alpha = await getUserAlpha(sb, user.id, body.appId, PROJECTORS[body.appId].alpha_default);
+  const projectorEntry = (PROJECTORS as Record<string, { alpha_default: number }>)[body.appId];
+  const defaultAlpha = projectorEntry?.alpha_default ?? 0.5;
+  const alpha = await getUserAlpha(sb, user.id, body.appId as AppId, defaultAlpha);
   const userThresholds = await getUserThresholds(sb, user.id);
 
-  const contributions = projectByApp(body.appId, body.data, {
+  const contributions = projectByApp(body.appId as AppId, body.data, {
     sigma_u: sigma, alpha_app: alpha, current_morpho: morpho,
   });
 
