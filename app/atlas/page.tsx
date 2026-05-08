@@ -101,7 +101,10 @@ export default function AtlasPage() {
           <div className="flex items-baseline gap-3">
             <span className="text-3xl font-light text-white">{current.sigma.toFixed(2)}</span>
             <span className="text-xs text-gray-500">
-              source: {current.source}{current.hsp_score &&  HSP=${current.hsp_score.toFixed(1)}}
+              source: {current.source}
+              {current.hsp_score != null && (
+                <span> · HSP={current.hsp_score.toFixed(1)}</span>
+              )}
             </span>
           </div>
           <div className="text-xs text-gray-600 mt-2">範囲: 0.70 (低感受) 〜 1.40 (高感受)</div>
