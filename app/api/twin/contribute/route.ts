@@ -1,10 +1,5 @@
 /**
  * /api/twin/contribute  —  SUST v0.2/v0.3 Bayesian update endpoint
- *
- * v0.3 Phase 1: ユーザー別 threshold / α_app を feedback 学習経由で適応化。
- *
- * ペイロード互換: 全 8 アプリの既存 contributeToTwin クライアントは
- * { app_id, raw_data } (旧形式) を送っているため、両者を受け付ける。
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -14,11 +9,10 @@ import { z } from 'zod';
 import { PROJECTORS, projectByApp } from '@/lib/twin-projectors';
 import { getUserAlpha, getUserThresholds } from '@/lib/twin-learning';
 import {
-  AXIS_META,
+  AXIS_META_V2,
   AXIS_DIMENSIONS,
   type AxisId,
   type AxisContribution,
-  type AppId,
   type ContributeResponse,
   type MorphoProfile,
   type AxisDistribution,
@@ -36,7 +30,6 @@ const ContributeSchema = z.object({
   client_ts: z.string().datetime().optional(),
 });
 
-// 旧形式 { app_id, raw_data } を新形式 { appId, data } に正規化
 function normalizeContribute(raw: Record<string, unknown>): unknown {
   if (raw && typeof raw === 'object') {
     if ('appId' in raw && 'data' in raw) return raw;
@@ -78,8 +71,8 @@ async function getMorpho(sb: ReturnType<typeof getServiceClient>, userId: string
     .select('axis,mu,variance,last_updated,observation_count')
     .eq('user_id', userId);
   const morpho = {} as MorphoProfile;
-  for (const axisId of Object.keys(AXIS_META) as AxisId[]) {
-    const meta = AXIS_META[axisId];
+  for (const axisId of Object.keys(AXIS_META_V2) as AxisId[]) {
+    const meta = AXIS_META_V2[axisId];
     const found = rows?.find((r) => r.axis === axisId);
     morpho[axisId] = found
       ? { mu: found.mu as number[], variance: found.variance as number[], lastUpdated: found.last_updated, observationCount: found.observation_count }
@@ -248,7 +241,7 @@ export async function POST(req: NextRequest) {
   const contribId = crypto.randomUUID();
   await sb.from('twin_contributions').insert({
     id: contribId, user_id: user.id, app: body.appId,
-    payload: body.data as AppId,
+    payload: body.data,
     payload_hash: crypto.createHash('sha256').update(JSON.stringify(body.data)).digest('hex'),
     axis_contributions: contributions, alpha_app: alpha, sigma_u: sigma,
     client_ts: body.client_ts ?? null,

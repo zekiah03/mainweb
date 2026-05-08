@@ -1,32 +1,24 @@
 /**
- * Solnova Digital Twin — Type Definitions (SUST v0.2)
+ * Solnova Digital Twin — Type Definitions (SUST v0.2 / v0.3)
  *
  * 13 軸 (A〜M) Morpho Profile、寄与イベント、仮説、insight、API 形状。
- * 設計原理 P1 (加法性): 軸追加は AxisId に列挙を足すだけで型安全に拡張。
+ * ファイル末尾に v0.1 (12 軸) の後方互換エクスポートを含む。
  */
 
 // ============================================================
-//  軸定義
+//  軸定義 (SUST v0.2 以降)
 // ============================================================
 
 export type AxisId =
-  | 'A' // 発達由来 Developmental Origin
-  | 'B' // 時間構造選好 Temporal Structure Preference
-  | 'C' // 覚醒位相 Awakening Phase
-  | 'D' // ニーズ充足度 Needs Satisfaction
-  | 'E' // 価値階層 Value Hierarchy
-  | 'F' // 自己境界 Self-Boundary Topology
-  | 'G' // 感情強度 Emotion Intensity
-  | 'H' // 感情感度 Emotion Sensitivity
-  | 'I' // 感情持続 Emotion Duration
-  | 'J' // 表現スタイル Expression Style
-  | 'K' // 関係性開放 Relational Openness
-  | 'L' // 感情遷移選好 Emotion Transition Preferences
-  | 'M'; // 自己物語整合性 Narrative Coherence (v0.2)
+  | 'A' | 'B' | 'C'
+  | 'D' | 'E' | 'F'
+  | 'G' | 'H' | 'I'
+  | 'J' | 'K' | 'L'
+  | 'M';
 
 export type AxisLayer = 'I' | 'II' | 'III' | 'IV';
 
-export interface AxisMeta {
+export interface AxisMetaV2 {
   id: AxisId;
   name: string;
   layer: AxisLayer;
@@ -36,7 +28,7 @@ export interface AxisMeta {
   defaultUpdateRate: number;
 }
 
-export const AXIS_META: Record<AxisId, AxisMeta> = {
+export const AXIS_META_V2: Record<AxisId, AxisMetaV2> = {
   A: { id: 'A', name: 'Developmental Origin',           layer: 'I',   dim: 12, beta: 0.0, tau_days: 3650, defaultUpdateRate: 0.05 },
   B: { id: 'B', name: 'Temporal Structure Preference',  layer: 'I',   dim: 9,  beta: 0.0, tau_days: 365,  defaultUpdateRate: 0.08 },
   C: { id: 'C', name: 'Awakening Phase',                layer: 'I',   dim: 1,  beta: 0.0, tau_days: 365,  defaultUpdateRate: 0.10 },
@@ -53,7 +45,7 @@ export const AXIS_META: Record<AxisId, AxisMeta> = {
 };
 
 // ============================================================
-//  感情 28 次元 (G/H/I 共通)
+//  感情 28 次元
 // ============================================================
 
 export const EMOTION_28 = [
@@ -99,7 +91,7 @@ export const AXIS_DIMENSIONS: Record<AxisId, readonly string[]> = {
 };
 
 // ============================================================
-//  軸ベクトル: 平均 μ + 分散 ν² (v0.2 Bayesian)
+//  Bayesian 分布
 // ============================================================
 
 export interface AxisDistribution {
@@ -111,10 +103,6 @@ export interface AxisDistribution {
 
 export type MorphoProfile = { [K in AxisId]: AxisDistribution };
 
-// ============================================================
-//  ユーザー個体差
-// ============================================================
-
 export interface UserSusceptibility {
   user_id: string;
   sigma: number;
@@ -125,7 +113,7 @@ export interface UserSusceptibility {
 }
 
 // ============================================================
-//  寄与イベント
+//  寄与 payload 型
 // ============================================================
 
 export type AppId =
@@ -188,7 +176,7 @@ export interface EvolvePayload {
 }
 
 // ============================================================
-//  射影結果
+//  射影関数と関連型
 // ============================================================
 
 export interface AxisContribution {
@@ -212,8 +200,19 @@ export interface ContributionRecord {
   sigma_u: number;
 }
 
+export type ProjectionFn<P> = (
+  payload: P,
+  context: { sigma_u: number; alpha_app: number; current_morpho: MorphoProfile },
+) => AxisContribution[];
+
+export interface AppProjector<P> {
+  app: AppId;
+  alpha_default: number;
+  project: ProjectionFn<P>;
+}
+
 // ============================================================
-//  仮説
+//  仮説・ insight
 // ============================================================
 
 export type HypothesisId =
@@ -230,10 +229,6 @@ export interface HypothesisScore {
   evidence_summary: Record<string, number>;
   last_evaluated: string;
 }
-
-// ============================================================
-//  Insight
-// ============================================================
 
 export type InsightType = 'observation'|'pattern'|'hypothesis'|'invitation'|'caution';
 export type InsightFeedback = 'resonated'|'misaligned'|'unsure';
@@ -262,10 +257,6 @@ export interface InsightCard {
   feedback_at: string | null;
 }
 
-// ============================================================
-//  衝突 / Drift
-// ============================================================
-
 export interface ConflictReport {
   axis: AxisId;
   dimension: string;
@@ -283,10 +274,6 @@ export interface DriftEvent {
   is_significant: boolean;
 }
 
-// ============================================================
-//  同意
-// ============================================================
-
 export type ConsentLevel = 'L0'|'L1'|'L2'|'L3';
 
 export interface UserConsent {
@@ -297,10 +284,6 @@ export interface UserConsent {
   longitudinal_participation: boolean;
   changed_at: string;
 }
-
-// ============================================================
-//  API 型
-// ============================================================
 
 export interface ContributeRequest {
   appId: AppId;
@@ -318,7 +301,7 @@ export interface ContributeResponse {
 export interface GetProfileResponse {
   morpho: MorphoProfile;
   sigma: number;
-  version: '0.2';
+  version: '0.2' | '0.3';
   updated_at: string;
 }
 
@@ -328,25 +311,6 @@ export interface FeedbackRequest {
   note?: string;
 }
 
-// ============================================================
-//  射影関数型
-// ============================================================
-
-export type ProjectionFn<P> = (
-  payload: P,
-  context: { sigma_u: number; alpha_app: number; current_morpho: MorphoProfile },
-) => AxisContribution[];
-
-export interface AppProjector<P> {
-  app: AppId;
-  alpha_default: number;
-  project: ProjectionFn<P>;
-}
-
-// ============================================================
-//  集団事前分布
-// ============================================================
-
 export interface PopulationPrior {
   axis: AxisId;
   dimension: string;
@@ -354,4 +318,48 @@ export interface PopulationPrior {
   variance_pop: number;
   n: number;
   computed_at: string;
+}
+
+// ============================================================
+//  v0.1 後方互換 (twin_profiles テーブル · 旧 /twin ページ · 旧 レーダー UI)
+//  読み込み専用 · 新規コードでは使わないこと
+// ============================================================
+
+export const AXIS_KEYS = ['A','B','C','D','E','F','G','H','I','J','K','L'] as const;
+export type AxisKey = (typeof AXIS_KEYS)[number];
+
+export interface LegacyAxisMeta {
+  key: AxisKey;
+  labelJa: string;
+  color: string;
+}
+
+// 旧 v0.1 軸メタ (ラダーチャート描画と /twin ページ用)
+// labelJa は v0.1 スキーマに合わせてある (例: A=構造 B=エネルギー)
+export const AXIS_META: Record<AxisKey, LegacyAxisMeta> = {
+  A: { key: 'A', labelJa: '構造',           color: '#ef4444' },
+  B: { key: 'B', labelJa: 'エネルギー',     color: '#f97316' },
+  C: { key: 'C', labelJa: '入出力',         color: '#eab308' },
+  D: { key: 'D', labelJa: '制御',           color: '#84cc16' },
+  E: { key: 'E', labelJa: '健康',           color: '#22c55e' },
+  F: { key: 'F', labelJa: '環境依存',         color: '#10b981' },
+  G: { key: 'G', labelJa: '相互作用',         color: '#06b6d4' },
+  H: { key: 'H', labelJa: '重力',           color: '#0ea5e9' },
+  I: { key: 'I', labelJa: '排除',           color: '#3b82f6' },
+  J: { key: 'J', labelJa: '流動性',         color: '#6366f1' },
+  K: { key: 'K', labelJa: 'プライド',       color: '#8b5cf6' },
+  L: { key: 'L', labelJa: '死との距離',     color: '#a855f7' },
+};
+
+export interface TwinProfile {
+  user_id: string;
+  axes12?: Partial<Record<AxisKey, number>>;
+  axes12_confidence?: Partial<Record<AxisKey, number>>;
+  axes12_rationale?: Partial<Record<AxisKey, string>>;
+  completeness?: number;
+  summary?: string | null;
+  catchphrase?: string | null;
+  object_type?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
