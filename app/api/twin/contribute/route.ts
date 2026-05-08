@@ -1,7 +1,8 @@
 /**
  * /api/twin/contribute  —  SUST v0.2/v0.3 Bayesian update endpoint
  *
- * Phase 2: AppId 拡張 — narrative / atlas / mirror を許可
+ * Phase 2: 仮説発火時 Anthropic API で insight 本文を生成。
+ * ANTHROPIC_API_KEY 未設定時 · LLM 失敗時 · lint エラー時は静的テンプレへフォールバック。
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -10,6 +11,11 @@ import crypto from 'node:crypto';
 import { z } from 'zod';
 import { PROJECTORS, projectByApp } from '@/lib/twin-projectors';
 import { getUserAlpha, getUserThresholds } from '@/lib/twin-learning';
+import {
+  buildInsightPrompt,
+  callLLMForInsight,
+  lintInsight,
+} from '@/lib/twin-insight-prompts';
 import {
   AXIS_META_V2,
   AXIS_DIMENSIONS,
@@ -160,6 +166,79 @@ async function evaluateHypotheses(
   return fired;
 }
 
+// ============================================================
+//  静的テンプレ (LLM フォールバック)
+// ============================================================
+
+interface InsightTemplate {
+  type: 'observation'|'pattern'|'hypothesis'|'invitation'|'caution';
+  axes: AxisId[];
+  title: string;
+  body: string;
+  actions: unknown[];
+}
+
+const CARDS: Partial<Record<HypothesisId, InsightTemplate>> = {
+  'SUST-1':  { type:'pattern',     axes:['A','D'], title:'過去の不足を取り戻しているように見える', body:'幼少期の感情環境が厳しめだった一方で、いまは感情ニーズが落ち着いているようです。後年の経験で安全感を獲得した「 earned secure 」のパターンに見えます。', actions:[{kind:'reflect',label:'いまの安心の源を書き出す'}] },
+  'SUST-2':  { type:'caution',     axes:['J'],     title:'抑制と爆発が両極化しているかも', body:'感情を抑える傾向と瞬発的に出る傾向が同時に高まっています。表現の窓が狭くなると、押し込めた感情が突発的に噴き出すサイクルに入りやすくなります。', actions:[{kind:'reflect',label:'直近 1 週間のイラつきを 3 行で書く'}] },
+  'SUST-3':  { type:'observation', axes:['E','F'], title:'価値観と境界線が整合しています', body:'大切にしている価値領域と、侵されたくない境界領域がよく一致しています。', actions:[{kind:'feedback',label:'これは自分らしい?'}] },
+  'SUST-6':  { type:'invitation',  axes:['K','D'], title:'家族関係で感情のやり取りが滞っているかも', body:'家族との関係での開放度が低めで、同時に感情ニーズの渇望が高めです。', actions:[{kind:'open_app',app:'gap',label:'gap で家族との場面を記録'}] },
+  'SUST-7':  { type:'observation', axes:['M'],     title:'自己物語の統合が進んでいます', body:'ここ最近、自分についての語りと実際の論理が一致してきているようです。各層のばらつきが収束し、内部の整合度が上がっています。', actions:[{kind:'feedback',label:'この感覚はしっくり来る?'}] },
+  'SUST-10': { type:'pattern',     axes:['F','D'], title:'境界とニーズが同期しています', body:'守りたい領域と必要としているものがきれいに対応しています。自己理解の整合度が高い状態です。', actions:[{kind:'feedback',label:'これはしっくり来る?'}] },
+};
+
+// ============================================================
+//  LLM で insight 本文生成 (静的テンプレへフォールバック)
+// ============================================================
+
+async function generateInsightContent(
+  hid: HypothesisId,
+  morpho: MorphoProfile,
+  card: InsightTemplate,
+  confidence: number,
+): Promise<{ title: string; body: string; actions: unknown[]; source: 'llm' | 'template' }> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return { title: card.title, body: card.body, actions: card.actions, source: 'template' };
+  }
+
+  // 証拠サマリを morpho から抽出
+  const evidence: Record<string, number> = { confidence };
+  for (const ax of card.axes) {
+    const vals = morpho[ax].mu;
+    evidence[`${ax}_mean`] = vals.reduce((a, b) => a + b, 0) / vals.length;
+    const vars_ = morpho[ax].variance;
+    evidence[`${ax}_var`] = vars_.reduce((a, b) => a + b, 0) / vars_.length;
+  }
+
+  const prompt = buildInsightPrompt({
+    hypothesis: hid, confidence, axesReferenced: card.axes, evidenceSummary: evidence,
+  });
+
+  try {
+    const llmResult = await callLLMForInsight(prompt, apiKey);
+    if (!llmResult) {
+      return { title: card.title, body: card.body, actions: card.actions, source: 'template' };
+    }
+    const lint = lintInsight({ title: llmResult.title, body: llmResult.body }, confidence);
+    if (!lint.ok) {
+      console.warn('[twin] insight lint failed', { hid, issues: lint.issues });
+      return { title: card.title, body: card.body, actions: card.actions, source: 'template' };
+    }
+    return {
+      title: llmResult.title,
+      body: llmResult.body,
+      actions: Array.isArray(llmResult.actions) && llmResult.actions.length > 0
+        ? llmResult.actions
+        : card.actions,
+      source: 'llm',
+    };
+  } catch (e) {
+    console.warn('[twin] LLM insight call threw', e);
+    return { title: card.title, body: card.body, actions: card.actions, source: 'template' };
+  }
+}
+
 async function triggerInsights(
   sb: ReturnType<typeof getServiceClient>,
   userId: string,
@@ -174,28 +253,23 @@ async function triggerInsights(
     .in('hypothesis_id', fired);
   const recentIds = new Set((recent ?? []).map((r: { hypothesis_id: string }) => r.hypothesis_id));
   const toGenerate = fired.filter((id) => !recentIds.has(id));
+
   const lowVarConf = (axes: AxisId[]) => {
     const avgVar = axes.map((a) => morpho[a].variance.reduce((s,v) => s+v, 0) / morpho[a].variance.length)
       .reduce((a,b) => a+b, 0) / axes.length;
     return Math.max(0, Math.min(1, 1 - avgVar / 2500));
   };
-  const CARDS: Partial<Record<HypothesisId, { type: string; axes: AxisId[]; title: string; body: string; actions: unknown[] }>> = {
-    'SUST-1':  { type:'pattern',     axes:['A','D'], title:'過去の不足を取り戻しているように見える', body:'幼少期の感情環境が厳しめだった一方で、いまは感情ニーズが落ち着いているようです。後年の経験で安全感を獲得した「 earned secure 」のパターンに見えます。', actions:[{kind:'reflect',label:'いまの安心の源を書き出す'}] },
-    'SUST-2':  { type:'caution',     axes:['J'],     title:'抑制と爆発が両極化しているかも', body:'感情を抑える傾向と瞬発的に出る傾向が同時に高まっています。表現の窓が狭くなると、押し込めた感情が突発的に噴き出すサイクルに入りやすくなります。', actions:[{kind:'reflect',label:'直近 1 週間のイラつきを 3 行で書く'}] },
-    'SUST-3':  { type:'observation', axes:['E','F'], title:'価値観と境界線が整合しています', body:'大切にしている価値領域と、侵されたくない境界領域がよく一致しています。', actions:[{kind:'feedback',label:'これは自分らしい?'}] },
-    'SUST-6':  { type:'invitation',  axes:['K','D'], title:'家族関係で感情のやり取りが滞っているかも', body:'家族との関係での開放度が低めで、同時に感情ニーズの渇望が高めです。', actions:[{kind:'open_app',app:'gap',label:'gap で家族との場面を記録'}] },
-    'SUST-7':  { type:'observation', axes:['M'],     title:'自己物語の統合が進んでいます', body:'ここ最近、自分についての語りと実際の論理が一致してきているようです。各層のばらつきが収束し、内部の整合度が上がっています。', actions:[{kind:'feedback',label:'この感覚はしっくり来る?'}] },
-    'SUST-10': { type:'pattern',     axes:['F','D'], title:'境界とニーズが同期しています', body:'守りたい領域と必要としているものがきれいに対応しています。自己理解の整合度が高い状態です。', actions:[{kind:'feedback',label:'これはしっくり来る?'}] },
-  };
+
   let count = 0;
   for (const hid of toGenerate) {
     const card = CARDS[hid];
     if (!card) continue;
     const confidence = lowVarConf(card.axes);
+    const content = await generateInsightContent(hid, morpho, card, confidence);
     await sb.from('twin_insights').insert({
       user_id: userId, type: card.type, trigger: 'hypothesis_fired',
       axes_referenced: card.axes, hypothesis_id: hid, confidence,
-      title: card.title, body: card.body, actions: card.actions,
+      title: content.title, body: content.body, actions: content.actions,
     });
     count++;
   }
