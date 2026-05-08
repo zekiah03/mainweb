@@ -28,10 +28,10 @@ interface SigmaInfo {
 }
 
 const LAYER_COLOR: Record<string, string> = {
-  I:   '#a78bfa', // 紫 - Substrate
-  II:  '#60a5fa', // 青 - Structural
-  III: '#34d399', // 緑 - Dynamic
-  IV:  '#fbbf24', // 黄 - Expressive
+  I:   '#a78bfa',
+  II:  '#60a5fa',
+  III: '#34d399',
+  IV:  '#fbbf24',
 }
 
 export default function ProfilePage() {
@@ -92,7 +92,7 @@ export default function ProfilePage() {
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
       <Link href="/" className="text-xs text-gray-600 hover:text-gray-400 transition-colors mb-8 block">
-        ← Solnova Lab
+        ← Solnova
       </Link>
 
       <div className="mb-10">
@@ -103,7 +103,6 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      {/* Top stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
         <Stat label="寄与件数" value={String(contributionCount)} />
         <Stat label="個体差 σ_u" value={sigma?.sigma?.toFixed(2) ?? '—'} sub={sigma?.source ?? ''} />
@@ -111,7 +110,6 @@ export default function ProfilePage() {
         <Stat label="記録軸" value={String(Object.values(morpho).filter(Boolean).length)} sub="/ 13" />
       </div>
 
-      {/* Layer-grouped axis grid */}
       {(['I','II','III','IV'] as const).map((layer) => {
         const layerAxes = axisIds.filter((id) => AXIS_META_V2[id].layer === layer)
         const layerName = { I:'Substrate (±年)', II:'Structural (±月)', III:'Dynamic (±週)', IV:'Expressive (±日)' }[layer]
@@ -125,19 +123,13 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-3">
               {layerAxes.map((axId) => (
-                <AxisRow
-                  key={axId}
-                  axId={axId}
-                  row={morpho[axId]}
-                  color={LAYER_COLOR[layer]}
-                />
+                <AxisRow key={axId} axId={axId} row={morpho[axId]} color={LAYER_COLOR[layer]} />
               ))}
             </div>
           </section>
         )
       })}
 
-      {/* Hypotheses */}
       {hypotheses.length > 0 && (
         <section className="mb-10">
           <h2 className="text-xs tracking-widest text-gray-600 uppercase mb-4">仮説スコア</h2>
@@ -160,7 +152,6 @@ export default function ProfilePage() {
         </section>
       )}
 
-      {/* Contributions by app */}
       {Object.keys(byApp).length > 0 && (
         <section>
           <h2 className="text-xs tracking-widest text-gray-600 uppercase mb-4">アプリ別寄与</h2>
@@ -176,15 +167,12 @@ export default function ProfilePage() {
         </section>
       )}
 
-      {/* Quick links */}
       <div className="mt-12 pt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex flex-wrap gap-3 text-xs">
-          <Link href="/mirror" className="px-3 py-1.5 rounded-full text-indigo-300"
-                style={{ border: '1px solid rgba(99,102,241,0.3)' }}>→ mirror</Link>
-          <Link href="/narrative" className="px-3 py-1.5 rounded-full text-emerald-300"
-                style={{ border: '1px solid rgba(16,185,129,0.3)' }}>→ narrative</Link>
-          <Link href="/atlas" className="px-3 py-1.5 rounded-full text-amber-300"
-                style={{ border: '1px solid rgba(245,158,11,0.3)' }}>→ atlas</Link>
+          <Link href="/mirror" className="px-3 py-1.5 rounded-full text-pink-300"
+                style={{ border: '1px solid rgba(236,72,153,0.3)' }}>→ mirror</Link>
+          <Link href="/journal" className="px-3 py-1.5 rounded-full text-cyan-300"
+                style={{ border: '1px solid rgba(6,182,212,0.3)' }}>→ journal</Link>
         </div>
       </div>
     </main>
@@ -208,12 +196,10 @@ function AxisRow({ axId, row, color }: { axId: AxisId; row: MorphoAxisRow | null
   const dims = AXIS_DIMENSIONS[axId]
   const has = row !== null
 
-  // Mean of mu vector
   const muAvg = has ? row.mu.reduce((a,b) => a+b, 0) / row.mu.length : 50
   const varAvg = has ? row.variance.reduce((a,b) => a+b, 0) / row.variance.length : 2500
   const confidence = Math.max(0, Math.min(1, 1 - varAvg / 2500))
 
-  // Show top 3 dims by absolute deviation from 50
   const ranked = has
     ? row.mu.map((v, i) => ({ name: dims[i], v }))
             .sort((a, b) => Math.abs(b.v - 50) - Math.abs(a.v - 50))
