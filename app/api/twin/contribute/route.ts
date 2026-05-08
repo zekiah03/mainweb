@@ -2,6 +2,9 @@
  * /api/twin/contribute  —  SUST v0.2/v0.3 Bayesian update endpoint
  *
  * v0.3 Phase 1: ユーザー別 threshold / α_app を feedback 学習経由で適応化。
+ *
+ * ペイロード互換: 全 8 アプリの既存 contributeToTwin クライアントは
+ * { app_id, raw_data } (旧形式) を送っているため、両者を受け付ける。
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -22,14 +25,31 @@ import {
   type HypothesisId,
 } from '@/lib/twin-types';
 
+const APP_IDS = [
+  'resonance','feelings','how-feelings-work','valuse',
+  'pazst','minus','gap','evolve',
+] as const;
+
 const ContributeSchema = z.object({
-  appId: z.enum([
-    'resonance','feelings','how-feelings-work','valuse',
-    'pazst','minus','gap','evolve',
-  ]),
+  appId: z.enum(APP_IDS),
   data: z.record(z.unknown()),
   client_ts: z.string().datetime().optional(),
 });
+
+// 旧形式 { app_id, raw_data } を新形式 { appId, data } に正規化
+function normalizeContribute(raw: Record<string, unknown>): unknown {
+  if (raw && typeof raw === 'object') {
+    if ('appId' in raw && 'data' in raw) return raw;
+    if ('app_id' in raw && 'raw_data' in raw) {
+      return {
+        appId: raw.app_id,
+        data: raw.raw_data,
+        client_ts: raw.client_ts,
+      };
+    }
+  }
+  return raw;
+}
 
 function getServiceClient() {
   return createSupabaseClient(
@@ -193,7 +213,8 @@ export async function POST(req: NextRequest) {
 
   let body: z.infer<typeof ContributeSchema>;
   try {
-    body = ContributeSchema.parse(await req.json());
+    const raw = await req.json();
+    body = ContributeSchema.parse(normalizeContribute(raw));
   } catch (err) {
     return NextResponse.json({ error: 'invalid_payload', detail: String(err) }, { status: 400 });
   }
@@ -203,7 +224,6 @@ export async function POST(req: NextRequest) {
   const sigma   = await getSigma(sb, user.id);
   const morpho  = await getMorpho(sb, user.id);
 
-  // v0.3: ユーザー別 α_app と threshold を取得
   const alpha = await getUserAlpha(sb, user.id, body.appId, PROJECTORS[body.appId].alpha_default);
   const userThresholds = await getUserThresholds(sb, user.id);
 
