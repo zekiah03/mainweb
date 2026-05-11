@@ -50,7 +50,7 @@ export default function JournalPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
         <div className="text-gray-600 text-sm">読み込み中...</div>
       </div>
     )
@@ -67,10 +67,6 @@ export default function JournalPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-12">
-      <Link href="/" className="text-xs text-gray-600 hover:text-gray-400 transition-colors mb-8 block">
-        ← Solnova
-      </Link>
-
       <div className="mb-10">
         <div className="text-xs tracking-widest text-cyan-400 uppercase mb-2">Journal</div>
         <h1 className="text-3xl font-light text-white mb-2">全アプリ横断の記録</h1>

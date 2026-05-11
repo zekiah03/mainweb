@@ -80,7 +80,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
         <div className="text-gray-600 text-sm">読み込み中...</div>
       </div>
     )
@@ -91,10 +91,6 @@ export default function ProfilePage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12">
-      <Link href="/" className="text-xs text-gray-600 hover:text-gray-400 transition-colors mb-8 block">
-        ← Solnova
-      </Link>
-
       <div className="mb-10">
         <div className="text-xs tracking-widest text-indigo-400 uppercase mb-2">SUST v0.3 Profile</div>
         <h1 className="text-3xl font-light text-white mb-2">13 軸 Morpho Profile</h1>

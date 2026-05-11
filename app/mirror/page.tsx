@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 
 type InsightFeedback = 'resonated' | 'misaligned' | 'unsure'
@@ -98,7 +97,7 @@ export default function MirrorPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
         <div className="text-gray-600 text-sm">読み込み中...</div>
       </div>
     )
@@ -109,10 +108,6 @@ export default function MirrorPage() {
 
   return (
     <main className="max-w-3xl mx-auto px-4 py-12">
-      <Link href="/" className="text-xs text-gray-600 hover:text-gray-400 transition-colors mb-8 block">
-        ← Solnova Lab
-      </Link>
-
       <div className="mb-10">
         <div className="text-xs tracking-widest text-indigo-400 uppercase mb-2">Mirror</div>
         <h1 className="text-3xl font-light text-white mb-2">気づきへのフィードバック</h1>
