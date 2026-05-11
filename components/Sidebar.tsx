@@ -60,18 +60,18 @@ export function Sidebar() {
 
   return (
     <aside
-      className="sidebar"
+      className="sidebar fsi"
       style={{
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.014) 100%)',
+        background: 'rgba(255,255,255,0.02)',
         borderRight: '1px solid rgba(255,255,255,0.07)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         position: 'relative',
         zIndex: 20,
-        flexShrink: 0,
+        animationDelay: '0s',
       }}
     >
       {/* Logo */}
@@ -80,7 +80,7 @@ export function Sidebar() {
           className="sidebar-label"
           style={{
             fontSize: 9,
-            letterSpacing: '0.3em',
+            letterSpacing: '0.32em',
             textTransform: 'uppercase',
             color: 'rgba(255,255,255,0.2)',
             marginBottom: 8,
@@ -91,19 +91,19 @@ export function Sidebar() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <div style={{
-            width: 24,
-            height: 24,
-            borderRadius: 7,
-            background: 'rgba(139,92,246,0.18)',
-            border: '1px solid rgba(139,92,246,0.4)',
-            boxShadow: '0 0 16px rgba(139,92,246,0.3), inset 0 0 8px rgba(139,92,246,0.1)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            width: 24, height: 24,
+            borderRadius: 6,
+            border: '1px solid rgba(255,255,255,0.22)',
+            boxShadow: '0 0 12px rgba(255,255,255,0.08)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-              <polygon points="6,1 11,4.5 11,11 1,11 1,4.5" stroke="#a78bfa" strokeWidth="1" fill="rgba(139,92,246,0.12)" />
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none">
+              <rect x="1" y="1" width="7" height="7"
+                stroke="rgba(255,255,255,0.55)" strokeWidth="1"
+                fill="none"
+                transform="rotate(45 4.5 4.5)"
+              />
             </svg>
           </div>
           <span
@@ -111,7 +111,7 @@ export function Sidebar() {
             style={{
               fontSize: 15,
               fontWeight: 300,
-              color: 'rgba(255,255,255,0.72)',
+              color: 'rgba(255,255,255,0.7)',
               letterSpacing: '0.06em',
               whiteSpace: 'nowrap',
             }}
@@ -122,67 +122,54 @@ export function Sidebar() {
       </div>
 
       {/* Divider */}
-      <div style={{ height: 1, background: 'rgba(255,255,255,0.055)', margin: '0 12px 10px' }} />
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '0 12px 10px' }} />
 
       {/* Navigation */}
       <nav style={{ flex: 1, padding: '4px 0' }}>
-        {NAV.map(({ href, label, sub, icon }) => {
-          const isActive = href === '/' ? pathname === '/' : pathname.startsWith(href)
+        {NAV.map(({ href, label, sub, icon }, i) => {
+          const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
           return (
             <Link
               key={href}
               href={href}
-              className="sidebar-nav-item"
+              className="snav"
               style={{
-                color: isActive ? '#fff' : 'rgba(255,255,255,0.34)',
-                background: isActive
-                  ? 'rgba(139,92,246,0.1)'
-                  : 'transparent',
-                boxShadow: isActive
-                  ? 'inset 0 0 0 1px rgba(139,92,246,0.22), 0 0 24px rgba(139,92,246,0.07)'
+                color: active ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.32)',
+                background: active ? 'rgba(255,255,255,0.06)' : 'transparent',
+                boxShadow: active
+                  ? 'inset 0 0 0 1px rgba(255,255,255,0.1), 0 0 20px rgba(255,255,255,0.04)'
                   : 'none',
+                animationDelay: `${0.08 + i * 0.06}s`,
               }}
             >
-              {/* Active glow bar */}
+              {/* Active bar */}
               <div style={{
                 position: 'absolute',
-                left: -8,
-                top: '20%',
-                height: '60%',
-                width: 3,
+                left: -8, top: '20%', height: '60%', width: 2.5,
                 borderRadius: 2,
-                background: isActive ? '#8b5cf6' : 'transparent',
-                boxShadow: isActive
-                  ? '0 0 10px #8b5cf6, 0 0 22px rgba(139,92,246,0.55)'
+                background: active ? '#fff' : 'transparent',
+                boxShadow: active
+                  ? '0 0 8px rgba(255,255,255,0.9), 0 0 18px rgba(255,255,255,0.5)'
                   : 'none',
                 transition: 'all 0.25s ease',
               }} />
 
               <span style={{
-                color: isActive ? '#a78bfa' : 'rgba(255,255,255,0.28)',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 18,
+                color: active ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.22)',
+                flexShrink: 0, display: 'flex', alignItems: 'center',
+                justifyContent: 'center', width: 18,
               }}>
                 {icon}
               </span>
 
               <div className="sidebar-label" style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                <div style={{
-                  fontSize: 13,
-                  fontWeight: isActive ? 500 : 400,
-                  letterSpacing: '0.02em',
-                  lineHeight: 1.2,
-                }}>
+                <div style={{ fontSize: 13, fontWeight: active ? 500 : 400, letterSpacing: '0.02em', lineHeight: 1.2 }}>
                   {label}
                 </div>
                 <div style={{
                   fontSize: 9,
-                  color: isActive ? 'rgba(167,139,250,0.65)' : 'rgba(255,255,255,0.17)',
-                  letterSpacing: '0.08em',
-                  marginTop: 2,
+                  color: active ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.16)',
+                  letterSpacing: '0.08em', marginTop: 2,
                 }}>
                   {sub}
                 </div>
@@ -195,15 +182,12 @@ export function Sidebar() {
       {/* Version */}
       <div
         className="sidebar-label"
-        style={{
-          padding: '14px 18px 22px',
-          borderTop: '1px solid rgba(255,255,255,0.05)',
-        }}
+        style={{ padding: '14px 18px 22px', borderTop: '1px solid rgba(255,255,255,0.05)' }}
       >
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.14)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
           SUST v0.3
         </div>
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.09)', marginTop: 3 }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.08)', marginTop: 3 }}>
           Aggregator · 11 apps
         </div>
       </div>

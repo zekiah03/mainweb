@@ -3,62 +3,47 @@
 @tailwind utilities;
 
 :root {
-  --bg: #050508;
-  --fg: #e2e2f0;
   color-scheme: dark;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
-  background: #050508;
-  color: #e2e2f0;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
   margin: 0;
   padding: 0;
+  background: #050505;
+  color: #e8e8e8;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ── Fog drift animations ── */
-@keyframes fogDrift1 {
-  0%,  100% { transform: translate(  0px,  0px) scale(1.00); }
-  25%        { transform: translate( 45px,-30px) scale(1.07); }
-  50%        { transform: translate( 75px, 20px) scale(0.95); }
-  75%        { transform: translate( 20px, 60px) scale(1.04); }
+/* ── Appear animation ── */
+@keyframes fadeScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.88) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
-@keyframes fogDrift2 {
-  0%,  100% { transform: translate(  0px,  0px) scale(1.00); }
-  30%        { transform: translate(-60px, 40px) scale(1.10); }
-  65%        { transform: translate( 40px,-50px) scale(0.91); }
-}
-
-@keyframes fogDrift3 {
-  0%,  100% { transform: translate( 0px,  0px) scale(1.00); }
-  40%        { transform: translate(50px, 60px) scale(0.93); }
-  70%        { transform: translate(-40px,-30px) scale(1.10); }
-}
-
-@keyframes fogDrift4 {
-  0%,  100% { transform: translate(  0px,  0px) scale(1.00); }
-  35%        { transform: translate(-50px,-40px) scale(1.07); }
-  70%        { transform: translate( 35px, 50px) scale(0.95); }
+.fsi {
+  opacity: 0;
+  animation: fadeScaleIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ── Sidebar responsive ── */
 .sidebar {
-  width: 200px;
-  min-width: 200px;
+  width: 196px;
+  min-width: 196px;
   flex-shrink: 0;
 }
 
-.sidebar-label {
-  display: block;
-}
+.sidebar-label { display: block; }
 
-.sidebar-nav-item {
+.snav {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -66,22 +51,12 @@ body {
   margin: 2px 8px;
   border-radius: 10px;
   text-decoration: none;
-  transition: all 0.25s ease;
+  transition: background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
   position: relative;
-  overflow: visible;
 }
 
 @media (max-width: 640px) {
-  .sidebar {
-    width: 54px;
-    min-width: 54px;
-  }
-  .sidebar-label {
-    display: none;
-  }
-  .sidebar-nav-item {
-    justify-content: center;
-    padding: 12px 0;
-    margin: 2px 4px;
-  }
+  .sidebar { width: 52px; min-width: 52px; }
+  .sidebar-label { display: none; }
+  .snav { justify-content: center; padding: 12px 0; margin: 2px 4px; }
 }
