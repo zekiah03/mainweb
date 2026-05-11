@@ -1,8 +1,17 @@
 import type { Metadata } from 'next'
+import dynamic from 'next/dynamic'
 import './globals.css'
 import { AuthInit } from '@/components/AuthInit'
-import { Sidebar } from '@/components/Sidebar'
-import { FogBackground } from '@/components/FogBackground'
+
+const FogBackground = dynamic(
+  () => import('@/components/FogBackground').then((m) => ({ default: m.FogBackground })),
+  { ssr: false }
+)
+
+const Sidebar = dynamic(
+  () => import('@/components/Sidebar').then((m) => ({ default: m.Sidebar })),
+  { ssr: false }
+)
 
 export const metadata: Metadata = {
   title: 'Solnova Lab',
