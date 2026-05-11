@@ -15,10 +15,12 @@ const APPS = [
   { id: 'minus',             label: 'minus',             desc: '手放す',             url: 'https://minus-kappa.vercel.app' },
   { id: 'gap',               label: 'gap',               desc: '言いたいこと',       url: 'https://gap-steel.vercel.app' },
   { id: 'evolve',            label: 'evolve',            desc: '成長の記録',         url: 'https://evolve-zekiahandales-6710s-projects.vercel.app' },
-  { id: 'narrative',         label: 'narrative',         desc: '今の自分を一文で',   url: '#' },
-  { id: 'atlas',             label: 'atlas',             desc: '感受性を記録',       url: '#' },
+  { id: 'narrative',         label: 'narrative',         desc: '今の自分を一文で',   url: '/narrative' },
+  { id: 'atlas',             label: 'atlas',             desc: '感受性を記録',       url: '/atlas' },
   { id: 'lie',               label: 'lie',               desc: 'ついた嘘を振り返る', url: 'https://lie-six.vercel.app' },
 ]
+
+const isInternal = (url: string) => url.startsWith('/')
 
 function ViewerCard({ href, label, sub, glyph, delay }: typeof VIEWERS[0]) {
   return (
@@ -27,16 +29,12 @@ function ViewerCard({ href, label, sub, glyph, delay }: typeof VIEWERS[0]) {
       className="fsi"
       style={{
         animationDelay: `${delay}s`,
-        display: 'flex',
-        flexDirection: 'column',
-        flex: 1,
-        padding: '26px 22px',
-        borderRadius: 18,
+        display: 'flex', flexDirection: 'column', flex: 1,
+        padding: '26px 22px', borderRadius: 18,
         textDecoration: 'none',
         border: '1px solid rgba(255,255,255,0.08)',
         background: 'rgba(255,255,255,0.025)',
-        backdropFilter: 'blur(18px)',
-        WebkitBackdropFilter: 'blur(18px)',
+        backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
         boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 32px rgba(0,0,0,0.35)',
         transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)',
         cursor: 'pointer',
@@ -44,7 +42,7 @@ function ViewerCard({ href, label, sub, glyph, delay }: typeof VIEWERS[0]) {
       onMouseEnter={(e) => {
         const s = e.currentTarget.style
         s.border = '1px solid rgba(255,255,255,0.22)'
-        s.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.09), 0 0 0 1px rgba(255,255,255,0.07), 0 16px 48px rgba(255,255,255,0.06), 0 0 80px rgba(255,255,255,0.03)'
+        s.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.09), 0 0 0 1px rgba(255,255,255,0.07), 0 16px 48px rgba(255,255,255,0.06)'
         s.background = 'rgba(255,255,255,0.05)'
         s.transform = 'translateY(-4px) scale(1.01)'
       }}
@@ -57,111 +55,85 @@ function ViewerCard({ href, label, sub, glyph, delay }: typeof VIEWERS[0]) {
       }}
     >
       <div style={{
-        fontSize: 32,
-        color: 'rgba(255,255,255,0.55)',
-        marginBottom: 20,
-        lineHeight: 1,
-        textShadow: '0 0 24px rgba(255,255,255,0.4)',
+        fontSize: 32, color: 'rgba(255,255,255,0.55)', marginBottom: 20,
+        lineHeight: 1, textShadow: '0 0 24px rgba(255,255,255,0.4)',
       }}>
         {glyph}
       </div>
-      <div style={{
-        fontSize: 10,
-        letterSpacing: '0.24em',
-        textTransform: 'uppercase',
-        color: 'rgba(255,255,255,0.6)',
-        marginBottom: 10,
-      }}>
+      <div style={{ fontSize: 10, letterSpacing: '0.24em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginBottom: 10 }}>
         {label}
       </div>
-      <div style={{
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.32)',
-        lineHeight: 1.65,
-      }}>
+      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.32)', lineHeight: 1.65 }}>
         {sub}
       </div>
     </a>
   )
 }
 
-function AppCard({ id, label, desc, url }: typeof APPS[0], delay: number) {
-  const ready = url !== '#'
+function AppCard({ app, delay }: { app: typeof APPS[0]; delay: number }) {
+  const { id, label, desc, url } = app
+  const internal = isInternal(url)
 
   const inner = (
     <>
       <div style={{
-        width: 6, height: 6,
-        borderRadius: '50%',
-        background: ready ? 'rgba(255,255,255,0.7)' : 'transparent',
-        border: ready ? 'none' : '1px solid rgba(255,255,255,0.2)',
-        boxShadow: ready ? '0 0 6px rgba(255,255,255,0.6), 0 0 14px rgba(255,255,255,0.25)' : 'none',
+        width: 6, height: 6, borderRadius: '50%',
+        background: 'rgba(255,255,255,0.7)',
+        boxShadow: '0 0 6px rgba(255,255,255,0.6), 0 0 14px rgba(255,255,255,0.25)',
         marginBottom: 10,
       }} />
       <div style={{
         fontSize: 11,
         fontFamily: '"SF Mono", "Fira Code", monospace',
-        color: ready ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.2)',
-        marginBottom: 5,
-        letterSpacing: '0.04em',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
+        color: 'rgba(255,255,255,0.75)',
+        marginBottom: 5, letterSpacing: '0.04em',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
         {label}
       </div>
       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', lineHeight: 1.45 }}>
         {desc}
       </div>
-      {!ready && (
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.12)', marginTop: 8, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-          準備中
-        </div>
-      )}
     </>
   )
 
-  const base: React.CSSProperties = {
-    display: 'block',
-    padding: '14px',
-    borderRadius: 14,
-    border: `1px solid rgba(255,255,255,${ready ? '0.08' : '0.04'})`,
-    background: `rgba(255,255,255,${ready ? '0.025' : '0.01'})`,
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: ready ? '0 4px 16px rgba(0,0,0,0.2)' : 'none',
+  const baseStyle: React.CSSProperties = {
+    display: 'block', padding: '14px', borderRadius: 14,
+    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(255,255,255,0.025)',
+    backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
     transition: 'all 0.32s cubic-bezier(0.16,1,0.3,1)',
-    opacity: ready ? 1 : 0.38,
-    textDecoration: 'none',
-    cursor: ready ? 'pointer' : 'not-allowed',
+    textDecoration: 'none', cursor: 'pointer',
   }
 
-  if (!ready) return <div key={id} style={base}>{inner}</div>
+  const enter = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const s = e.currentTarget.style
+    s.border = '1px solid rgba(255,255,255,0.2)'
+    s.boxShadow = '0 0 0 1px rgba(255,255,255,0.06), 0 8px 28px rgba(255,255,255,0.05)'
+    s.transform = 'translateY(-2px) scale(1.015)'
+    s.background = 'rgba(255,255,255,0.05)'
+  }
+  const leave = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const s = e.currentTarget.style
+    s.border = '1px solid rgba(255,255,255,0.08)'
+    s.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'
+    s.transform = 'translateY(0) scale(1)'
+    s.background = 'rgba(255,255,255,0.025)'
+  }
 
   return (
-    <a
-      key={id}
-      href={url}
-      target="_blank"
-      rel="noreferrer"
-      style={base}
-      onMouseEnter={(e) => {
-        const s = e.currentTarget.style
-        s.border = '1px solid rgba(255,255,255,0.2)'
-        s.boxShadow = '0 0 0 1px rgba(255,255,255,0.06), 0 8px 28px rgba(255,255,255,0.05), 0 0 40px rgba(255,255,255,0.03)'
-        s.transform = 'translateY(-2px) scale(1.015)'
-        s.background = 'rgba(255,255,255,0.05)'
-      }}
-      onMouseLeave={(e) => {
-        const s = e.currentTarget.style
-        s.border = '1px solid rgba(255,255,255,0.08)'
-        s.boxShadow = '0 4px 16px rgba(0,0,0,0.2)'
-        s.transform = 'translateY(0) scale(1)'
-        s.background = 'rgba(255,255,255,0.025)'
-      }}
-    >
-      {inner}
-    </a>
+    <div key={id} className="fsi" style={{ animationDelay: `${delay}s` }}>
+      <a
+        href={url}
+        {...(!internal && { target: '_blank', rel: 'noreferrer' })}
+        style={baseStyle}
+        onMouseEnter={enter}
+        onMouseLeave={leave}
+      >
+        {inner}
+      </a>
+    </div>
   )
 }
 
@@ -169,7 +141,6 @@ export default function Home() {
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '52px 28px 70px' }}>
 
-      {/* Header */}
       <div className="fsi" style={{ animationDelay: '0.04s', marginBottom: 56 }}>
         <div style={{
           fontSize: 9, letterSpacing: '0.34em', textTransform: 'uppercase',
@@ -192,16 +163,12 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Viewers */}
       <section style={{ marginBottom: 56 }}>
-        <div
-          className="fsi"
-          style={{
-            animationDelay: '0.13s',
-            fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.16)', marginBottom: 18,
-          }}
-        >
+        <div className="fsi" style={{
+          animationDelay: '0.13s',
+          fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.16)', marginBottom: 18,
+        }}>
           ツインを見る
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
@@ -209,27 +176,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Apps */}
       <section>
-        <div
-          className="fsi"
-          style={{
-            animationDelay: '0.42s',
-            fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.16)', marginBottom: 18,
-          }}
-        >
+        <div className="fsi" style={{
+          animationDelay: '0.42s',
+          fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase',
+          color: 'rgba(255,255,255,0.16)', marginBottom: 18,
+        }}>
           アプリで記録する
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
           {APPS.map((a, i) => (
-            <div
-              key={a.id}
-              className="fsi"
-              style={{ animationDelay: `${0.46 + i * 0.065}s` }}
-            >
-              {AppCard(a, 0.46 + i * 0.065)}
-            </div>
+            <AppCard key={a.id} app={a} delay={0.46 + i * 0.065} />
           ))}
         </div>
       </section>
