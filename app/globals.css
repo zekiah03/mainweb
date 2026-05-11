@@ -3,13 +3,60 @@
 @tailwind utilities;
 
 :root {
-  --bg: #080810;
-  --fg: #e2e2f0;
+  color-scheme: dark;
 }
 
+*, *::before, *::after { box-sizing: border-box; }
+
 body {
-  background: #080810;
-  color: #e2e2f0;
+  margin: 0;
+  padding: 0;
+  background: #050505;
+  color: #e8e8e8;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── Appear animation ── */
+@keyframes fadeScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.88) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.fsi {
+  opacity: 0;
+  animation: fadeScaleIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Sidebar responsive ── */
+.sidebar {
+  width: 196px;
+  min-width: 196px;
+  flex-shrink: 0;
+}
+
+.sidebar-label { display: block; }
+
+.snav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin: 2px 8px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
+  position: relative;
+}
+
+@media (max-width: 640px) {
+  .sidebar { width: 52px; min-width: 52px; }
+  .sidebar-label { display: none; }
+  .snav { justify-content: center; padding: 12px 0; margin: 2px 4px; }
 }
