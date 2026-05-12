@@ -4,9 +4,15 @@
 
 :root {
   color-scheme: dark;
+  --font-sans: -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-family: var(--font-sans);
+}
 
 body {
   margin: 0;
@@ -14,7 +20,16 @@ body {
   background: #050505;
   color: #e8e8e8;
   min-height: 100vh;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'kern' 1, 'liga' 1;
+  text-rendering: optimizeLegibility;
+}
+
+/* Monospace — IBM Plex Mono フォールバック付き */
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
 }
 
 /* ── Appear animation ── */

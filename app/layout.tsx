@@ -1,8 +1,21 @@
 import type { Metadata } from 'next'
+import { IBM_Plex_Sans_JP, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
 import { AuthInit } from '@/components/AuthInit'
 import { Sidebar } from '@/components/Sidebar'
 import { FogBackground } from '@/components/FogBackground'
+
+const sans = IBM_Plex_Sans_JP({
+  weight: ['300', '400', '500'],
+  preload: false,
+  variable: '--font-sans',
+})
+
+const mono = IBM_Plex_Mono({
+  weight: ['400', '500'],
+  subsets: ['latin'],
+  variable: '--font-mono',
+})
 
 export const metadata: Metadata = {
   title: 'Solnova Lab',
@@ -11,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja">
+    <html lang="ja" className={`${sans.variable} ${mono.variable}`}>
       <body style={{
         margin: 0,
         padding: 0,
